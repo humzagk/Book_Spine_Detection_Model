@@ -1,14 +1,27 @@
+Here is the updated draft for your GitHub `README.md`. It maintains the strong narrative about your "paradigm shift" while professionally addressing the file storage workaround.
+
+---
+
 # Super Model v1: Sticker-Centric Book Spine Detection
 
 **A high-precision, lightweight YOLOv11 model for automated library inventory management.**
 
 ## 📌 Overview
 
-**Super Model v1** (`super_model_v1.pt`) represents a paradigm shift in automated library inventory.  Unlike traditional approaches that attempt to segment entire book spines—struggling with varied artwork, reflections, and complex backgrounds—this model focuses exclusively on the **Call Number Sticker** as the primary signal.
+**Super Model v1** (`super_model_v1.pt`) represents a paradigm shift in automated library inventory. Unlike traditional approaches that attempt to segment entire book spines—struggling with varied artwork, reflections, and complex backgrounds—this model focuses exclusively on the **Call Number Sticker** as the primary signal.
 
-By narrowing the region of interest (ROI) to this high-contrast, standardized geometric target, the model achieves near-perfect detection rates with significantly lower computational overhead, making it ideal for edge deployment on mobile devices.
+By narrowing the region of interest (ROI) to this high-contrast, standardized geometric target, the model achieves near-perfect detection rates with significantly lower computational overhead, making it ideal for edge deployment.
 
-> **Note:** This repository contains the pre-trained model and benchmark results. The full methodology, including the "Forensic Analysis of Iterative Failures" and "Spatial Sorting Logic," will be detailed in my upcoming research paper. *Stay tuned for the publication release.*
+> **Note:** The full methodology, including the "Forensic Analysis of Iterative Failures" and "Spatial Sorting Logic," will be detailed in my upcoming research paper. *Stay tuned for the publication release.*
+
+---
+
+## 📥 Model Download
+
+Due to GitHub's file size restrictions, the pre-trained model weights (`super_model_v1.pt`) and high-resolution evaluation metrics are hosted externally.
+
+**You can access the model and results via this public Google Drive link:**
+👉 **[Download Super Model v1 & Results](https://drive.google.com/drive/folders/15RD4xqWAx8WoOGeiW56Ca_HNutzfSKvs?usp=share_link)**
 
 ---
 
@@ -19,8 +32,14 @@ Current state-of-the-art research often treats library inventory as a **segmenta
 **My Approach (V7 Architecture):**
 
 * **Target:** Detects the *sticker*, not the book.
+
+
 * **Philosophy:** "High-Signal, Low-Noise." The sticker is a standardized white rectangle; the rest of the spine is noise.
-* **Result:** A simpler, faster, and more robust pipeline that ignores cover art and focuses on the data that matters for inventory: the Call Number.
+
+
+* **Result:** A simpler, faster, and more robust pipeline that filters out cover art and focuses strictly on the data that matters for inventory: the Call Number.
+
+
 
 ---
 
@@ -33,7 +52,7 @@ Current state-of-the-art research often treats library inventory as a **segmenta
 | **mAP@50** | **0.995** | 99.5% accuracy at standard thresholds. |
 | **Precision** | **0.997** | Near-zero false positives; extreme noise rejection. |
 | **Recall** | **0.999** | Virtually no missed volumes in dense shelf environments.|
-| **Box Loss** | **0.6077** | Minimal localization error for tight bounding boxes.|
+| **Box Loss** | **0.6077** | Minimal localization error for tight bounding boxes. |
 
 ### Comparison to Related Work
 
@@ -68,12 +87,6 @@ Current state-of-the-art research often treats library inventory as a **segmenta
 
 
 ---
-
-## 📂 Repository Contents
-
-* `models/super_model_v1.pt`: The pre-trained PyTorch model weights.
-* `results/`: Visualizations of detection performance on test sets.
-* `inference.py`: Simple script to run detection on your own library images.
 
 ## 🔜 Coming Soon: Research Paper
 
