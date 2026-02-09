@@ -1,7 +1,3 @@
-Here is the updated draft for your GitHub `README.md`. It maintains the strong narrative about your "paradigm shift" while professionally addressing the file storage workaround.
-
----
-
 # Super Model v1: Sticker-Centric Book Spine Detection
 
 **A high-precision, lightweight YOLOv11 model for automated library inventory management.**
