@@ -2,7 +2,7 @@
 
 **A high-precision, lightweight YOLOv11 model for automated library inventory management.**
 
-## 📌 Overview
+## 📌 Overview 
 
 **Super Model v1** (`super_model_v1.pt`) represents a paradigm shift in automated library inventory. Unlike traditional approaches that attempt to segment entire book spines—struggling with varied artwork, reflections, and complex backgrounds—this model focuses exclusively on the **Call Number Sticker** as the primary signal.
 
