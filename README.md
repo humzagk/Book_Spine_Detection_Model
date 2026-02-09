@@ -30,31 +30,20 @@ Current state-of-the-art research often treats library inventory as a **segmenta
 
 | Metric | Score | Interpretation |
 | --- | --- | --- |
-| **mAP@50** | **0.995** | 99.5% accuracy at standard thresholds.
-
- |
-| **Precision** | **0.997** | Near-zero false positives; extreme noise rejection.
-
- |
-| **Recall** | **0.999** | Virtually no missed volumes in dense shelf environments.
-
- |
-| **Box Loss** | **0.6077** | Minimal localization error for tight bounding boxes.
-
- |
+| **mAP@50** | **0.995** | 99.5% accuracy at standard thresholds. |
+| **Precision** | **0.997** | Near-zero false positives; extreme noise rejection. |
+| **Recall** | **0.999** | Virtually no missed volumes in dense shelf environments.|
+| **Box Loss** | **0.6077** | Minimal localization error for tight bounding boxes.|
 
 ### Comparison to Related Work
 
-* 
-**My Model (V7):** **99.5% mAP** (Sticker-Centric YOLOv11).
+* **My Model (V7):** **99.5% mAP** (Sticker-Centric YOLOv11).
 
 
-* 
-*Reference A (Sensors Journal):* 90.22% mAP (Oriented R-CNN on full spines).
+* *Reference A (Sensors Journal):* 90.22% mAP (Oriented R-CNN on full spines).
 
 
-* 
-*Reference B (Electronics Journal):* 97.4% mAP (YOLOv11 + CBAM on full spines).
+* *Reference B (Electronics Journal):* 97.4% mAP (YOLOv11 + CBAM on full spines).
 
 
 
@@ -62,21 +51,17 @@ Current state-of-the-art research often treats library inventory as a **segmenta
 
 ## 🛠️ Model Architecture
 
-* 
-**Base Model:** YOLOv11 Medium (`yolo11m.pt`).
+* **Base Model:** YOLOv11 Medium (`yolo11m.pt`).
 
 
-* 
-**Training Hardware:** Tesla V100 GPU (TRUBA HPC Cluster).
+* **Training Hardware:** Tesla V100 GPU (TRUBA HPC Cluster).
 
 
 * **Key Optimizations:**
-* 
-**Adaptive Padding (+15px):** Prevents "Z-Clipping" where characters at the edge of the sticker (like 'Z' or '7') are cut off.
+* **Adaptive Padding (+15px):** Prevents "Z-Clipping" where characters at the edge of the sticker (like 'Z' or '7') are cut off.
 
 
-* 
-**Strict Allowlist OCR:** Post-processing filter to reject hallucinated symbols.
+* **Strict Allowlist OCR:** Post-processing filter to reject hallucinated symbols.
 
 
 
@@ -94,16 +79,13 @@ Current state-of-the-art research often treats library inventory as a **segmenta
 
 A comprehensive technical report detailing the full pipeline is currently in preparation. It will cover:
 
-1. 
-**Forensic Analysis:** Why segmentation models (SAM) failed in high-density environments.
+1. **Forensic Analysis:** Why segmentation models (SAM) failed in high-density environments.
 
 
-2. 
-**Spatial Logic:** The algorithm used to sort detected stickers into correct shelf order.
+2. **Spatial Logic:** The algorithm used to sort detected stickers into correct shelf order.
 
 
-3. 
-**OCR Pipeline:** The "Sharpening + Bicubic Upscaling" preprocessing steps that enable reading decimal points on stickers.
+3. **OCR Pipeline:** The "Sharpening + Bicubic Upscaling" preprocessing steps that enable reading decimal points on stickers.
 
 
 
