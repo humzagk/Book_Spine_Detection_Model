@@ -139,6 +139,7 @@ pipeline/v7_pipeline.py     # detection → sort → preprocess → OCR, as a CL
 notebooks/V7_pipeline.ipynb # original Colab notebook with a real run's output
 configs/args.yaml           # Ultralytics training arguments for super_model_v1
 configs/master_data.yaml    # merged dataset definition (9 datasets, 1 class)
+tests/                      # unit tests for shelf sorting and cropping
 requirements.txt
 ```
 
