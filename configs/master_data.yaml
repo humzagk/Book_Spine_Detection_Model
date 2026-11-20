@@ -1,0 +1,27 @@
+# MASTER DATASET CONFIGURATION
+# Merging 9 Datasets: 1 Original + 8 New from Pool
+
+path: .  # dataset root (set to where you place the datasets)
+
+train:
+  # 1. The Original Dataset (Kept in its old spot)
+  - dataset/train/images
+  
+  # 2. The 8 New Datasets (In the pool)
+  - datasets_pool/dataset_02/train/images
+  - datasets_pool/dataset_03/train/images
+  - datasets_pool/dataset_04/train/images
+  - datasets_pool/dataset_06/train/images
+  - datasets_pool/dataset_07/train/images
+  - datasets_pool/dataset_08/train/images
+  - datasets_pool/dataset_09/train/images
+  - datasets_pool/dataset_11/train/images
+
+val:
+  # We validate on the original validation set + one new one
+  - dataset/valid/images
+  - datasets_pool/dataset_02/valid/images
+
+# CLASSES
+nc: 1
+names: ['Book-Label']

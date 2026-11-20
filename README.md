@@ -1,103 +1,157 @@
 # Super Model v1: Sticker-Centric Book Spine Detection
 
-**A high-precision, lightweight YOLOv11 model for automated library inventory management.**
+**A lightweight YOLOv11 pipeline that reads library call numbers off a bookshelf photo, in shelf order, for automated inventory.**
 
-## 📌 Overview  
+📄 **Paper:** [Computer Vision-Based Automatic Bookshelf Organization](https://ieeexplore.ieee.org/document/11636493) (IEEE, 2026)
+📦 **Model weights, notebooks, results and test images:** [Google Drive folder](https://drive.google.com/drive/folders/1uv3XJsbOh32Au6SEQLGAVyFsrFkcjifY?usp=sharing)
 
-**Super Model v1** (`super_model_v1.pt`) represents a paradigm shift in automated library inventory. Unlike traditional approaches that attempt to segment entire book spines—struggling with varied artwork, reflections, and complex backgrounds—this model focuses exclusively on the **Call Number Sticker** as the primary signal.
+## Overview
 
-By narrowing the region of interest (ROI) to this high-contrast, standardized geometric target, the model achieves near-perfect detection rates with significantly lower computational overhead, making it ideal for edge deployment.
+Library inventory is a *high-noise, low-signal* problem. The only thing needed to check shelf order is the call number, and it sits on a small, standardised white sticker. The rest of the spine is artwork, logos and stylised type, which confuses general-purpose models.
 
-> **Note:** The full methodology, including the "Forensic Analysis of Iterative Failures" and "Spatial Sorting Logic," will be detailed in my upcoming research paper. *Stay tuned for the publication release.*
+Most published approaches segment or detect the **whole spine**. This project takes a different approach: it detects **only the call-number sticker**. Narrowing the region of interest to a high-contrast, regular shape makes detection more accurate and much cheaper, which suits mobile and edge deployment.
 
----
+## Pipeline (V7)
 
-## 📥 Model Download
+```
+Bookshelf photo
+  → YOLOv11m sticker detection (super_model_v1.pt)
+  → Spatial sort: shelf rows top-to-bottom, then left-to-right
+  → 15 px adaptive padding around each box
+  → 3× bicubic upscale → CLAHE → 3×3 sharpening
+  → EasyOCR with a strict allowlist (A-Z, 0-9, '.', '-')
+  → Call numbers in shelf order
+```
 
-Due to GitHub's file size restrictions, the pre-trained model weights (`super_model_v1.pt`) and high-resolution evaluation metrics are hosted externally.
+- **Adaptive padding** fixes "Z-clipping", where tight boxes cut characters at the sticker edge (a "7" or "Z" sliced in half).
+- **Super-resolution preprocessing** makes millimetre-scale characters and decimal points legible. CLAHE evens out lighting on curved spines.
+- **Strict allowlist OCR** stops the OCR engine from producing symbols that can't appear in a call number, which rejects noise from scuffs, barcodes and textures.
 
-**You can access the model and results via this public Google Drive link:**
-👉 **[Download Super Model v1 & Results](https://drive.google.com/drive/folders/15RD4xqWAx8WoOGeiW56Ca_HNutzfSKvs?usp=share_link)**
+"V7" is the seventh iteration. Earlier versions using zero-shot segmentation (Segment Anything) failed on dense shelves, merging neighbouring books or splitting single ones.
 
----
+## Results
 
-## 🚀 The Paradigm Shift
+The model was evaluated on a held-out validation set of **72 unseen images**:
 
-Current state-of-the-art research often treats library inventory as a **segmentation** problem, attempting to outline every book spine. This approach is computationally expensive and prone to "hallucination" when spines lack clear boundaries or feature complex art.
+| Metric | Score |
+|---|---|
+| mAP@50 | **0.995** |
+| Precision | **0.997** |
+| Recall | **0.999** |
+| Box loss | 0.6077 |
+| Confusion matrix | 697 true positives, 1 false negative, 0 false positives |
+| F1 | 1.00 at confidence threshold 0.312 |
 
-**My Approach (V7 Architecture):**
+### Ablation
 
-* **Target:** Detects the *sticker*, not the book.
+| Iteration | Architecture | Target | Preprocessing | Strict OCR allowlist | mAP@50 | Extraction success |
+|---|---|---|---|---|---|---|
+| V1 (baseline) | Segment Anything (SAM) | Full spine | None | No | 45.2% | 32.5% |
+| V4 | YOLOv8 | Sticker | None | No | 88.4% | 71.0% |
+| V6 | YOLOv11m | Sticker | 15 px padding + upscaling | No | 99.5% | 84.3% |
+| **V7** | **YOLOv11m** | **Sticker** | **15 px padding + upscaling** | **Yes** | **99.5%** | **98.9%** |
 
+### Related work
 
-* **Philosophy:** "High-Signal, Low-Noise." The sticker is a standardized white rectangle; the rest of the spine is noise.
+| Reference | Method | Target | mAP@50 |
+|---|---|---|---|
+| Ma et al., *Sensors* (2024) | Oriented R-CNN | Full spine | 90.22% |
+| Li et al., *Electronics* (2025) | YOLOv11 + CBAM + PaddleOCR | Full spine | 97.40% |
+| This work (V7) | YOLOv11m + EasyOCR | Sticker | 99.50% |
 
+These figures come from different datasets and detection targets, so they are reference points rather than a like-for-like benchmark.
 
-* **Result:** A simpler, faster, and more robust pipeline that filters out cover art and focuses strictly on the data that matters for inventory: the Call Number.
+### Example output
 
+This is a real run of the notebook on one shelf photo. It detected 24 stickers and printed them in shelf order, with each sticker's text lines joined by `|`:
 
+```
+Sticker 01: BL | 2747.3 | T67 | 2023
+Sticker 02: 2 | BL | 2747.2 | A75 | 2003
+Sticker 03: BL | 2747.8 | B35 | 2012
+...
+Sticker 16: BL | 2775.3 | D39 | 2006
+Sticker 17: BL | 2775.3 | D46 | 2006
+...
+Sticker 23: BM | 199 | S3 | S7 | 2016
+Sticker 24: BM | 199 | 8 | S719 | 2016
+```
 
----
+The full output is in [`notebooks/V7_pipeline.ipynb`](notebooks/V7_pipeline.ipynb). It also shows the kind of OCR errors that remain, such as `82747.8` for `2747.8` and stray fragments from neighbouring labels.
 
-## 📊 Performance Benchmarks
+## How to run
 
-`Super Model v1` was trained on a custom dataset using a "Virtual Merge" strategy on a High-Performance Computing (HPC) cluster. It outperforms current SOTA benchmarks in precision and recall for this specific task.
+1. Download `super_model_v1.pt` from the [Drive folder](https://drive.google.com/drive/folders/1uv3XJsbOh32Au6SEQLGAVyFsrFkcjifY?usp=sharing). Test images are in the same folder.
+2. Install the dependencies (a GPU is optional; EasyOCR and YOLO both run on CPU, just more slowly):
 
-| Metric | Score | Interpretation |
-| --- | --- | --- |
-| **mAP@50** | **0.995** | 99.5% accuracy at standard thresholds. |
-| **Precision** | **0.997** | Near-zero false positives; extreme noise rejection. |
-| **Recall** | **0.999** | Virtually no missed volumes in dense shelf environments.|
-| **Box Loss** | **0.6077** | Minimal localization error for tight bounding boxes. |
+   ```bash
+   git clone https://github.com/humzagk/Book_Spine_Detection_Model.git
+   cd Book_Spine_Detection_Model
+   pip install -r requirements.txt
+   ```
 
-### Comparison to Related Work
+3. Run the pipeline on a shelf photo:
 
-* **My Model (V7):** **99.5% mAP** (Sticker-Centric YOLOv11).
+   ```bash
+   python pipeline/v7_pipeline.py shelf.jpg --model super_model_v1.pt --out v7_results
+   ```
 
+   This prints the call numbers in shelf order. It also writes `v7_results/final_report.txt` and the preprocessed crop of every sticker to `v7_results/crops/`. Options: `--conf` (detection threshold, default 0.4) and `--padding` (default 15 px).
 
-* *Reference A (Sensors Journal):* 90.22% mAP (Oriented R-CNN on full spines).
+Alternatively, open [`notebooks/V7_pipeline.ipynb`](notebooks/V7_pipeline.ipynb) in Google Colab, upload the weights and an image, and run both cells.
 
+## Training
 
-* *Reference B (Electronics Journal):* 97.4% mAP (YOLOv11 + CBAM on full spines).
+| | |
+|---|---|
+| Base model | YOLOv11 Medium (`yolo11m.pt`), Ultralytics 8.3.20 |
+| Environment | Python 3.9.16, PyTorch 2.2.2 + CUDA 11.8 |
+| Hardware | NVIDIA Tesla V100 on the TRUBA HPC cluster |
+| Schedule | 100 epochs, batch 16, image size 640, seed 0 (deterministic) |
+| Data | "Virtual merge" of 9 labelled datasets (2,000+ images), one class: `Book-Label` |
 
+The exact configurations are in [`configs/`](configs). `args.yaml` holds the full Ultralytics training arguments, and `master_data.yaml` lists the merged train and validation splits. To retrain, place the datasets under the `path:` root in `master_data.yaml` and run:
 
+```bash
+yolo cfg=configs/args.yaml
+```
 
----
+### Source datasets
 
-## 🛠️ Model Architecture
+The training data was drawn from these public [Roboflow Universe](https://universe.roboflow.com) datasets. Each dataset has its own licence.
 
-* **Base Model:** YOLOv11 Medium (`yolo11m.pt`).
+- [book-spine-detector-model](https://universe.roboflow.com/test-awuby/book-spine-detector-model)
+- [booklabels](https://universe.roboflow.com/zihaowang999-gmail-com/booklabels)
+- [import-labels](https://universe.roboflow.com/will-jones/import-labels)
+- [test-8m60q](https://universe.roboflow.com/cam-dyas/test-8m60q)
+- [clara-book-label-image-detection](https://universe.roboflow.com/brian-prais/clara-book-label-image-detection)
+- [np-ann](https://universe.roboflow.com/genebaybay-yahoo-com/np-ann)
+- [a.i.](https://universe.roboflow.com/new-workspace-qnjlz/a.i.)
+- [clara](https://universe.roboflow.com/will-jones/clara)
+- [books-ponfj](https://universe.roboflow.com/zihaowang999-gmail-com/books-ponfj)
+- [booklabels-c9zqr](https://universe.roboflow.com/classtest/booklabels-c9zqr)
+- [books2](https://universe.roboflow.com/zihaowang999-gmail-com/books2)
 
+## Repository structure
 
-* **Training Hardware:** Tesla V100 GPU (TRUBA HPC Cluster).
+```
+pipeline/v7_pipeline.py     # detection → sort → preprocess → OCR, as a CLI
+notebooks/V7_pipeline.ipynb # original Colab notebook with a real run's output
+configs/args.yaml           # Ultralytics training arguments for super_model_v1
+configs/master_data.yaml    # merged dataset definition (9 datasets, 1 class)
+requirements.txt
+```
 
+## Future work
 
-* **Key Optimizations:**
-* **Adaptive Padding (+15px):** Prevents "Z-Clipping" where characters at the edge of the sticker (like 'Z' or '7') are cut off.
+- **Order checking**: compare the extracted call numbers against Dewey or Library of Congress order and flag misplaced volumes with their position on the shelf.
+- **Edge deployment**: quantise the weights (FP32 → INT8) to run on-device on iOS and Android.
+- **Wider validation**: more libraries, shelf materials (wood, reflective metal) and sticker standards.
 
+## Acknowledgement
 
-* **Strict Allowlist OCR:** Post-processing filter to reject hallucinated symbols.
+Numerical calculations were performed at TUBITAK ULAKBIM, High Performance and Grid Computing Center (TRUBA resources).
 
+## License
 
-
-
-
----
-
-## 🔜 Coming Soon: Research Paper
-
-A comprehensive technical report detailing the full pipeline is currently in preparation. It will cover:
-
-1. **Forensic Analysis:** Why segmentation models (SAM) failed in high-density environments.
-
-
-2. **Spatial Logic:** The algorithm used to sort detected stickers into correct shelf order.
-
-
-3. **OCR Pipeline:** The "Sharpening + Bicubic Upscaling" preprocessing steps that enable reading decimal points on stickers.
-
-
-
----
-
-*Created by Humza Gohar Kabir. For inquiries regarding the dataset or collaboration, please open an issue.*
+Code is released under the [MIT License](LICENSE). The trained weights were produced from the third-party datasets above, so check their licences before using the weights commercially.
