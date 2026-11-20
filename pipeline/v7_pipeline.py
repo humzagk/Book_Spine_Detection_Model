@@ -34,12 +34,35 @@ def preprocess_for_ocr(image):
     return cv2.filter2D(enhanced, -1, kernel)
 
 
+def group_rows(boxes):
+    """
+    Group detections into shelf rows by their vertical centres.
+
+    Boxes are sorted by centre y; a new row starts whenever the gap to the
+    previous box's centre exceeds half the median box height. This adapts to
+    image resolution and shelf spacing, unlike fixed pixel bands.
+    """
+    if not boxes:
+        return []
+    heights = sorted(b[3] - b[1] for b in boxes)
+    threshold = max(1, heights[len(heights) // 2]) / 2
+    by_y = sorted(boxes, key=lambda b: (b[1] + b[3]) / 2)
+    rows, prev_cy = [[by_y[0]]], (by_y[0][1] + by_y[0][3]) / 2
+    for b in by_y[1:]:
+        cy = (b[1] + b[3]) / 2
+        if cy - prev_cy > threshold:
+            rows.append([])
+        rows[-1].append(b)
+        prev_cy = cy
+    return rows
+
+
 def sort_boxes(boxes):
     """
     Sort detections in reading order: shelf rows top-to-bottom, then left-to-right.
-    Boxes are [x1, y1, x2, y2, conf]; rows are 100 px bands of y1.
+    Boxes are [x1, y1, x2, y2, conf].
     """
-    return sorted(boxes, key=lambda b: (int(b[1] / 100), b[0]))
+    return [b for row in group_rows(boxes) for b in sorted(row, key=lambda b: b[0])]
 
 
 def padded_crop(img, box, padding):
